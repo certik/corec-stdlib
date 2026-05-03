@@ -12,6 +12,38 @@ The actual platform interface and `base/` utilities come from the
 [`corec`](https://github.com/certik/corec) submodule. This repository only
 adds the standard-library names that wrap them.
 
+## Design philosophy: `app_main` vs `main`
+
+Native [Core C](https://github.com/certik/corec) applications are written
+against `corec/platform/platform.h` plus `corec/base/`, are built with
+`-nostdlib -nostdinc -fno-builtin`, and use `int app_main(void)` as their
+entry point. That is the recommended way to write a new program on top of
+Core C: there is no `main`, no C runtime, and no implicit dependency on a
+host libc. The platform layer (`platform_linux.c`, `platform_macos.c`,
+`platform_windows.c`, `platform_wasm.c`) is what calls `app_main()`.
+
+This repository is a different layer with a different goal: it is a
+**compatibility shim** that re-exposes a subset of the C standard library —
+`<stdio.h>`, `<string.h>`, `<stdlib.h>`, `<assert.h>`, etc. — so that
+existing C programs written against the standard library can run unmodified
+on top of Core C. From that angle, `test_stdlib.c` plays a dual role:
+
+1. **An example port of a "legacy" stdlib-using program.** The file uses
+   only standard headers and a normal `int main(void)`, exactly the way a
+   typical C program would be written. The build system supplies
+   `-Dmain=app_main` so the same source compiles into the `app_main()`
+   entry point that Core C's platform layer calls. Nothing in the program
+   itself has to change.
+2. **A test suite for the stdlib subset.** Because the file is also a
+   correct, portable C program, the same source can be compiled with the
+   host system compiler against the host's real C standard library. CI
+   does this first — if those assertions pass against the real libc, then
+   passing them against our reimplementation actually means the
+   reimplementation matches the standard.
+
+So: **prefer `app_main()` for new Core C programs.** Use `main()` only when
+you are porting code that already targets the C standard library.
+
 ## Layout
 
 * `corec/` — the [Core C](https://github.com/certik/corec) submodule
