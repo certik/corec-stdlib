@@ -81,6 +81,13 @@ static void test_strcpy(void) {
 static void test_strncpy(void) {
     char dest[10];
 
+    // GCC's -Wstringop-truncation flags deliberate truncation, which is
+    // precisely what these tests exercise. Suppress narrowly.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
+
     memset(dest, 'X', sizeof(dest));
     strncpy(dest, "abc", 3);
     assert(dest[0] == 'a' && dest[1] == 'b' && dest[2] == 'c');
@@ -91,6 +98,10 @@ static void test_strncpy(void) {
     assert(dest[0] == 'a' && dest[1] == 'b');
     assert(dest[2] == '\0' && dest[3] == '\0' && dest[4] == '\0'); // padded
     assert(dest[5] == 'X');
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 static void test_strcmp(void) {
@@ -256,8 +267,18 @@ static void test_snprintf(void) {
     // is the number of characters that *would* have been written if the
     // buffer were large enough; some implementations (including corec's
     // current base_vsnprintf) return the truncated length. We accept both.
+    //
+    // GCC's -Wformat-truncation flags this *intentional* truncation, so
+    // suppress that warning narrowly here.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
     char small[4];
     n = snprintf(small, sizeof(small), "abcdef");
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
     assert(n == 6 || n == 3);
     assert(small[3] == '\0');
     check_streq(small, "abc", "snprintf truncation");
