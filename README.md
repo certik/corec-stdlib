@@ -79,10 +79,49 @@ reading as an example:
 
 ## Layout
 
-* `corec/` — the [Core C](https://github.com/certik/corec) submodule
-  (provides `platform/` and `base/`).
-* `stdlib/` — C standard library subset headers and implementation files.
-* `test_stdlib.c` — test entry point and stdlib test suite.
+```
+corec-stdlib/
+├── corec/              # Core C submodule (platform/, base/)
+├── stdlib/             # C standard library subset (headers + .c)
+│   ├── assert.h        ├── ctype.h
+│   ├── float.h         ├── limits.h
+│   ├── stdarg.h        ├── stdbool.h
+│   ├── stddef.h        ├── stdint.h
+│   ├── stdio.h    stdio.c
+│   ├── stdlib.h   stdlib.c
+│   ├── string.h   string_impl.c
+│   └── printf.h   printf.c
+├── test_stdlib.c       # Conformance tests + example port
+├── pixi.toml           # Build tasks for linux/macos/windows/wasm
+└── .github/workflows/  # CI: host stdlib + nostdlib on each platform
+```
+
+## API surface
+
+The headers below mirror the standard ones. Anything not listed is
+intentionally not provided yet — when something is needed, add it (see
+[Contributing](#contributing--extending)).
+
+| Header | Provided |
+| --- | --- |
+| `<assert.h>` | `assert(expr)` — aborts on failure with file/line/function. |
+| `<ctype.h>` | `isdigit`, `isxdigit`, `isalpha`, `isalnum`, `isupper`, `islower`, `isspace`, `iscntrl`, `isprint`, `isgraph`, `ispunct`, `toupper`, `tolower` (ASCII / "C" locale, inline). |
+| `<float.h>` | `FLT_MAX` (via `corec/base/types.h`). |
+| `<limits.h>` | `CHAR_BIT`, `(S)CHAR_MIN/MAX`, `UCHAR_MAX`, `SHRT_MIN/MAX`, `USHRT_MAX`, `INT_MIN/MAX`, `UINT_MAX`, `LONG_MIN/MAX`, `ULONG_MAX`, `LLONG_MIN/MAX`, `ULLONG_MAX`. Platform-aware (LP64 / LLP64 / ILP32). |
+| `<stdarg.h>` | `va_list`, `va_start`, `va_arg`, `va_end`, `va_copy` (compiler builtins). |
+| `<stdbool.h>` | `bool`, `true`, `false`. |
+| `<stddef.h>` | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. |
+| `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros. |
+| `<stdio.h>` | `printf`, `vprintf`, `snprintf`, `vsnprintf`; minimal `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `SEEK_SET`/`CUR`/`END`. |
+| `<stdlib.h>` | `malloc`, `free`, `exit`, `abort`, `atoi`, `atoll`, `atof`, `rand`, `srand`, `RAND_MAX`, `EXIT_SUCCESS`, `EXIT_FAILURE`, `NULL`. |
+| `<string.h>` | `strlen`, `strcpy`, `strncpy`, `strcmp`, `strncmp`, `strchr`, `strrchr`, `strstr`, `strcspn`, `memcpy`, `memmove`, `memcmp`, `memset`, `memchr`. |
+
+`printf` / `snprintf` support the format set provided by
+`corec/base/numconv.c`'s `base_vsnprintf`:
+`%d`, `%i`, `%u`, `%ld`, `%lu`, `%lld`, `%llu`, `%zu`,
+`%x`, `%X`, `%lx`, `%lX`, `%llx`, `%llX`,
+`%p`, `%c`, `%s`, `%f`, `%.Nf`, `%%`.
+Width specifiers (e.g. `%5d`, `%-10s`) are not supported.
 
 ## Build & test
 
@@ -96,27 +135,56 @@ git submodule update --init --recursive
 Then:
 
 ```bash
-pixi run -e linux   test_linux       # Linux native
-pixi run -e macos   test_macos       # macOS native (on macOS only)
-pixi run -e windows test_windows     # Windows native (on Windows only, MSVC)
+pixi run -e linux   test_linux       # Linux native (clang -nostdlib)
+pixi run -e macos   test_macos       # macOS native (clang -nostdlib, on macOS only)
+pixi run -e windows test_windows     # Windows native (MSVC /kernel, on Windows only)
 pixi run -e wasm    test_wasm        # WebAssembly via wasmtime
 ```
 
 The same `corec_stdlib_test.wasm` runs in `wasmtime` and any other
 WASI-compatible runtime.
 
+## Using corec-stdlib in your project
+
+Add this repository (and Core C through it) as a submodule:
+
+```bash
+git submodule add https://github.com/certik/corec-stdlib third_party/corec-stdlib
+git submodule update --init --recursive
+```
+
+Then build your `myapp.c` (containing a normal `int main(void)`) like so:
+
+```bash
+clang \
+    -nostdlib -nostdinc -fno-builtin \
+    -Dmain=app_main \
+    -I third_party/corec-stdlib/corec \
+    -I third_party/corec-stdlib/stdlib \
+    -o myapp \
+    myapp.c \
+    third_party/corec-stdlib/stdlib/*.c \
+    third_party/corec-stdlib/corec/base/*.c \
+    third_party/corec-stdlib/corec/platform/platform_<host>.c
+```
+
+`-Dmain=app_main` rewrites your `main` so corec's platform layer (which
+provides `_start`) can call into it. Look at `pixi.toml` in this repository
+for ready-made command lines for each target (Linux raw syscalls, macOS
+`libSystem`, Windows `kernel32`, WebAssembly WASI).
+
 ## Continuous Integration
 
-GitHub Actions runs the test suite on Linux, macOS, and Windows on every push
-and PR. Each platform runs `test_stdlib.c` twice:
+GitHub Actions runs the test suite on Linux, macOS, and Windows on every
+push and PR. Each platform runs `test_stdlib.c` twice:
 
 1. **Against the host's standard library**, compiled with the system C
-   compiler (`cc` / `cl.exe`) and linked against the platform's libc. This
-   catches incorrect tests — if the test passes here, the behavior it asserts
-   matches what the C standard library is supposed to do.
+   compiler (`cc` / `cl.exe`) and linked against the platform's libc with
+   `-Wall -Wextra -Werror` (or `/W3 /WX`). If the test passes here, the
+   behavior it asserts is what the C standard library is supposed to do.
 2. **Against this repository's stdlib subset**, compiled with `-nostdlib
-   -nostdinc -fno-builtin` on top of `corec/`. This catches bugs in our
-   implementation.
+   -nostdinc -fno-builtin` on top of `corec/`. If this also passes, our
+   reimplementation matches that behavior.
 
 The same `test_stdlib.c` source is used in both cases — the nostdlib build
 just adds `-Dmain=app_main` so corec's platform layer can call into it as
@@ -134,11 +202,14 @@ A few conventions worth knowing before submitting changes:
   `<string.h>`, etc. Use what `corec/base/` and `corec/platform/platform.h`
   provide; if something is missing in `corec`, add it there first.
 * **Adding a stdlib function.** Add the prototype to the appropriate
-  `stdlib/*.h` header, implement it in the matching `stdlib/*.c` (typically a
-  thin wrapper around a `base_*` function from `corec/base/`), and add a test
-  case to `test_stdlib.c`.
+  `stdlib/*.h` header, implement it in the matching `stdlib/*.c` (typically
+  a thin wrapper around a `base_*` function from `corec/base/`), and add a
+  test case to `test_stdlib.c`. Add the function to the table in the
+  [API surface](#api-surface) section of this README.
 * **Tests.** All tests live in `test_stdlib.c`. Add a `test_<topic>()`
-  function and call it from `test_stdlib()` in `test_stdlib.c`. If a test
+  function and call it from `run_tests()`. Tests must compile and pass
+  *both* against the host's real stdlib and against this repository's
+  reimplementation — that is what the two-stage CI verifies. If a test
   creates files on disk, add their names to `.gitignore`.
 
 ### Making changes that span `corec` and `corec-stdlib`
@@ -186,3 +257,7 @@ verify the combined result before anything is merged. The typical workflow is:
 
 This keeps `main` of both repositories pointing at commits that build and
 test cleanly together.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).

@@ -3,7 +3,11 @@
 *.obj
 *.wasm
 *.exe
+*.pdb
+*.ilk
 *.dSYM/
 corec_stdlib_test_linux
 corec_stdlib_test_macos
 corec_stdlib_test_windows
+test_stdlib_host
+test_stdlib_host.exe

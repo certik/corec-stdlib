@@ -7,9 +7,15 @@
 #include <platform/platform.h>
 #include <base/buddy.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 void* malloc(size_t size) {
+    if (size == 0) {
+        // ISO C says malloc(0) may return NULL or a valid pointer. We
+        // return NULL because corec's buddy_alloc asserts on size==0.
+        return NULL;
+    }
     return buddy_alloc(size, NULL);
 }
 
@@ -30,13 +36,14 @@ void abort(void) {
 
 // Linear Congruential Generator (LCG)
 // Parameters: a = 1103515245, c = 12345, m = 2^31
+// RAND_MAX (defined in stdlib.h) = 0x7FFFFFFF.
 static uint32_t rand_state = 1;
 
-void srand(int seed) {
+void srand(unsigned int seed) {
     rand_state = (uint32_t)seed;
 }
 
-int rand() {
+int rand(void) {
     rand_state = (rand_state * 1103515245u + 12345u) & 0x7FFFFFFF;
     return (int)rand_state;
 }
@@ -166,6 +173,10 @@ double atof(const char* str) {
     }
 
     return sign * result;
+}
+
+int vsnprintf(char *str, size_t size, const char *format, va_list args) {
+    return base_vsnprintf(str, size, format, args);
 }
 
 int snprintf(char *str, size_t size, const char *format, ...) {
