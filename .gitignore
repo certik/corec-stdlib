@@ -1,0 +1,9 @@
+.pixi/
+*.o
+*.obj
+*.wasm
+*.exe
+*.dSYM/
+corec_stdlib_test_linux
+corec_stdlib_test_macos
+corec_stdlib_test_windows
