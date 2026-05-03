@@ -16,6 +16,18 @@ int strcmp(const char *s1, const char *s2) {
     return base_strcmp(s1, s2);
 }
 
+// memcpy is defined as a weak symbol so it can be overridden by a
+// platform-specific strong definition. In particular, on Linux the corec
+// platform layer provides a strong memcpy() (the compiler emits implicit
+// memcpy() calls in -nostdlib mode and the linker requires a single
+// definition), and that one wins. On macOS the symbol comes from
+// libSystem; on Windows MSVC with /kernel inlines memcpy(); on
+// WebAssembly clang lowers many calls to memory.copy but still needs
+// a memcpy symbol for the remaining external references — that symbol
+// is provided here.
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((weak))
+#endif
 void *memcpy(void *dest, const void *src, size_t n) {
     return base_memcpy(dest, src, n);
 }
