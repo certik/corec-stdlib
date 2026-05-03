@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-
 #if defined(_MSC_VER)
 // MSVC varargs implementation
 // x86: 4-byte alignment, x64/ARM64: 8-byte alignment

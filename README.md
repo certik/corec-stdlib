@@ -81,19 +81,23 @@ reading as an example:
 
 ```
 corec-stdlib/
-├── corec/              # Core C submodule (platform/, base/)
-├── stdlib/             # C standard library subset (headers + .c)
-│   ├── assert.h        ├── ctype.h
-│   ├── float.h         ├── limits.h
-│   ├── stdarg.h        ├── stdbool.h
-│   ├── stddef.h        ├── stdint.h
-│   ├── stdio.h    stdio.c
-│   ├── stdlib.h   stdlib.c
+├── corec/                  # Core C submodule (platform/, base/)
+├── stdlib/                 # C standard library subset (headers + .c)
+│   ├── assert.h
+│   ├── ctype.h
+│   ├── float.h
+│   ├── limits.h
+│   ├── stdarg.h
+│   ├── stdbool.h
+│   ├── stddef.h
+│   ├── stdint.h
+│   ├── stdio.h    stdio.c    # FILE I/O
+│   ├── stdlib.h   stdlib.c   # malloc, exit, ato*, rand, snprintf
 │   ├── string.h   string_impl.c
-│   └── printf.h   printf.c
-├── test_stdlib.c       # Conformance tests + example port
-├── pixi.toml           # Build tasks for linux/macos/windows/wasm
-└── .github/workflows/  # CI: host stdlib + nostdlib on each platform
+│   └── printf.c              # printf/vprintf (declared in stdio.h)
+├── test_stdlib.c           # Conformance tests + example port
+├── pixi.toml               # Build tasks for linux/macos/windows/wasm
+└── .github/workflows/      # CI: host stdlib + nostdlib on each platform
 ```
 
 ## API surface
@@ -112,7 +116,7 @@ intentionally not provided yet — when something is needed, add it (see
 | `<stdbool.h>` | `bool`, `true`, `false`. |
 | `<stddef.h>` | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. |
 | `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros. |
-| `<stdio.h>` | `printf`, `vprintf`, `snprintf`, `vsnprintf`; minimal `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `SEEK_SET`/`CUR`/`END`. |
+| `<stdio.h>` | `printf`, `vprintf`, `snprintf`, `vsnprintf`; `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `fwrite`, `fputc`, `fputs`, `SEEK_SET`/`CUR`/`END`. |
 | `<stdlib.h>` | `malloc`, `free`, `exit`, `abort`, `atoi`, `atoll`, `atof`, `rand`, `srand`, `RAND_MAX`, `EXIT_SUCCESS`, `EXIT_FAILURE`, `NULL`. |
 | `<string.h>` | `strlen`, `strcpy`, `strncpy`, `strcmp`, `strncmp`, `strchr`, `strrchr`, `strstr`, `strcspn`, `memcpy`, `memmove`, `memcmp`, `memset`, `memchr`. |
 

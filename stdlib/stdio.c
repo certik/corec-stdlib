@@ -156,4 +156,42 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return nread / size;
 }
 
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    if (!stream || stream->fd < 0 || size == 0 || nmemb == 0) {
+        return 0;
+    }
+
+    size_t total_bytes = size * nmemb;
+    ciovec_t iov;
+    iov.buf = (void *)ptr;
+    iov.buf_len = total_bytes;
+    size_t nwritten;
+    int ret = (int)platform_fd_write(stream->fd, &iov, 1, &nwritten);
+
+    if (ret != 0) {
+        stream->error = 1;
+        return 0;
+    }
+
+    return nwritten / size;
+}
+
+int fputc(int c, FILE *stream) {
+    unsigned char ch = (unsigned char)c;
+    if (fwrite(&ch, 1, 1, stream) != 1) {
+        return -1; // EOF
+    }
+    return (int)ch;
+}
+
+int fputs(const char *s, FILE *stream) {
+    size_t len = 0;
+    while (s[len]) len++;
+    if (len == 0) return 0;
+    if (fwrite(s, 1, len, stream) != len) {
+        return -1; // EOF
+    }
+    return 0;
+}
+
 // printf / vprintf live in printf.c; snprintf / vsnprintf live in stdlib.c.

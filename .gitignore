@@ -11,3 +11,4 @@ corec_stdlib_test_macos
 corec_stdlib_test_windows
 test_stdlib_host
 test_stdlib_host.exe
+test_stdlib_scratch.bin
