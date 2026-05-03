@@ -1,48 +1,81 @@
-# Core C — stdlib subset
+# corec-stdlib — a C standard library compatibility layer for Core C
 
-A minimal C standard library subset built on top of [Core C](https://github.com/certik/corec).
+`corec-stdlib` is a **compatibility layer that exposes a subset of the C
+standard library on top of [Core C](https://github.com/certik/corec)**. Its
+purpose is to let existing C programs — programs written against
+`<stdio.h>`, `<string.h>`, `<stdlib.h>`, `<assert.h>` and friends, with a
+normal `int main(void)` — build and run unmodified on top of Core C, without
+linking against the host platform's libc.
 
-This repository implements a small subset of the C standard library
-(`<stdio.h>`, `<stdlib.h>`, `<string.h>`, `<assert.h>`, `<stdint.h>`,
-`<stddef.h>`, `<stdarg.h>`, `<stdbool.h>`, `<ctype.h>`, `<float.h>`,
-`<limits.h>`, plus a custom `<printf.h>`) for programs that build with
-`-nostdlib -nostdinc -fno-builtin`.
+Concretely, this repository provides a small subset of `<stdio.h>`,
+`<stdlib.h>`, `<string.h>`, `<assert.h>`, `<stdint.h>`, `<stddef.h>`,
+`<stdarg.h>`, `<stdbool.h>`, `<ctype.h>`, `<float.h>`, `<limits.h>`, plus a
+custom `<printf.h>`, all implemented as thin wrappers around
+[`corec`](https://github.com/certik/corec)'s `base/` and `platform/` layers.
+Programs that use it still build with `-nostdlib -nostdinc -fno-builtin`;
+the names just look familiar.
 
-The actual platform interface and `base/` utilities come from the
-[`corec`](https://github.com/certik/corec) submodule. This repository only
-adds the standard-library names that wrap them.
+## When (and when not) to use this
 
-## Design philosophy: `app_main` vs `main`
+[Core C](https://github.com/certik/corec) is the foundation. It already
+provides everything a program needs — string handling, formatted I/O,
+memory management, file and OS access — through `base/` and `platform/`.
+A native Core C program uses those APIs directly, uses `int app_main(void)`
+as its entry point, and never sees libc or this repository at all. **That
+is the recommended way to write new code.**
 
-Native [Core C](https://github.com/certik/corec) applications are written
-against `corec/platform/platform.h` plus `corec/base/`, are built with
-`-nostdlib -nostdinc -fno-builtin`, and use `int app_main(void)` as their
-entry point. That is the recommended way to write a new program on top of
-Core C: there is no `main`, no C runtime, and no implicit dependency on a
-host libc. The platform layer (`platform_linux.c`, `platform_macos.c`,
+`corec-stdlib` exists for one reason: **you have C source that is already
+written against the C standard library and you want to build it on top of
+Core C without rewriting it.** That covers two common cases:
+
+* You are porting an existing application whose source uses `printf`,
+  `malloc`, `strcpy`, `assert`, etc., and a `main()` function.
+* You want to depend on a third-party C library that itself uses the C
+  standard library internally.
+
+Outside of those cases there is no particular reason to prefer this layer.
+The stdlib API does not add anything on top of `corec/base/`; if anything
+it is the weaker of the two:
+
+* It models strings as `char *` plus a separately-tracked length, instead
+  of `corec`'s explicit `string` (pointer + length together).
+* It encourages ad-hoc `malloc` / `free`, instead of `corec`'s arena-based
+  allocators that free everything in one call.
+* It is a global, non-namespaced API surface; `corec/base/` is namespaced
+  (`base_*`) and explicit about ownership and lifetimes.
+
+There is **nothing wrong** with using `corec-stdlib` when you need it — the
+implementation is small, well-tested, and built on the same primitives as
+the rest of Core C. It is just a means to an end: bringing existing
+stdlib-using code into the Core C world. For greenfield code on Core C,
+use `corec/base/` directly.
+
+## Entry point: `app_main` vs `main`
+
+Native Core C programs use `int app_main(void)` as their entry point.
+There is no `main`, no C runtime, and no implicit dependency on a host
+libc; corec's platform layer (`platform_linux.c`, `platform_macos.c`,
 `platform_windows.c`, `platform_wasm.c`) is what calls `app_main()`.
 
-This repository is a different layer with a different goal: it is a
-**compatibility shim** that re-exposes a subset of the C standard library —
-`<stdio.h>`, `<string.h>`, `<stdlib.h>`, `<assert.h>`, etc. — so that
-existing C programs written against the standard library can run unmodified
-on top of Core C. From that angle, `test_stdlib.c` plays a dual role:
+Programs that use `corec-stdlib` keep their original `int main(void)` —
+that is the whole point of the compatibility layer. The build system
+simply supplies `-Dmain=app_main` so the user's `main` is renamed to
+`app_main` at compile time and corec's platform layer can call into it.
+Nothing in the program itself has to change.
 
-1. **An example port of a "legacy" stdlib-using program.** The file uses
+`test_stdlib.c` in this repository plays two roles at once and is worth
+reading as an example:
+
+1. **An example port of an existing stdlib-using program.** The file uses
    only standard headers and a normal `int main(void)`, exactly the way a
-   typical C program would be written. The build system supplies
-   `-Dmain=app_main` so the same source compiles into the `app_main()`
-   entry point that Core C's platform layer calls. Nothing in the program
-   itself has to change.
-2. **A test suite for the stdlib subset.** Because the file is also a
-   correct, portable C program, the same source can be compiled with the
-   host system compiler against the host's real C standard library. CI
-   does this first — if those assertions pass against the real libc, then
-   passing them against our reimplementation actually means the
+   typical C program is written. The pixi tasks build it on top of Core C
+   with `-Dmain=app_main`; the source itself is unchanged.
+2. **A conformance test for the stdlib subset.** Because the file is also
+   a correct, portable C program, the same source can be compiled with
+   the host system compiler against the host's real C standard library.
+   CI does this first — if those assertions pass against the real libc,
+   then passing them against our reimplementation actually means the
    reimplementation matches the standard.
-
-So: **prefer `app_main()` for new Core C programs.** Use `main()` only when
-you are porting code that already targets the C standard library.
 
 ## Layout
 
