@@ -369,6 +369,9 @@ static void test_file_io(void) {
 
     rc = fclose(in);
     assert(rc == 0);
+
+    // EOF macro is -1.
+    assert(EOF == -1);
 }
 
 // -----------------------------------------------------------------------
@@ -448,6 +451,19 @@ static void test_stdlib_macros(void) {
     // NULL must be a null pointer.
     int *p = NULL;
     assert(p == NULL);
+
+    // <stdint.h> limits — sanity-check a few by exercising them at the
+    // edges of their respective types. We deliberately avoid expressions
+    // that depend on signed-overflow wrap (UB in C) and use unsigned
+    // arithmetic instead.
+    assert(INT8_MIN  == -128 && INT8_MAX  == 127);
+    assert(UINT8_MAX == 255);
+    assert(INT16_MIN == -32768 && INT16_MAX == 32767);
+    assert(UINT16_MAX == 65535);
+    assert(INT32_MIN < 0 && INT32_MAX > 0);
+    assert((uint32_t)INT32_MAX + 1u == 0x80000000u);
+    assert(INT64_MIN < 0 && INT64_MAX > 0);
+    assert((uint64_t)UINT64_MAX + 1u == 0);
 }
 
 // -----------------------------------------------------------------------

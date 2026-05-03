@@ -179,7 +179,7 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 int fputc(int c, FILE *stream) {
     unsigned char ch = (unsigned char)c;
     if (fwrite(&ch, 1, 1, stream) != 1) {
-        return -1; // EOF
+        return EOF;
     }
     return (int)ch;
 }
@@ -189,7 +189,7 @@ int fputs(const char *s, FILE *stream) {
     while (s[len]) len++;
     if (len == 0) return 0;
     if (fwrite(s, 1, len, stream) != len) {
-        return -1; // EOF
+        return EOF;
     }
     return 0;
 }

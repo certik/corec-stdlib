@@ -27,6 +27,11 @@ typedef struct FILE FILE;
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+// Returned by character / line-oriented I/O functions to signal end of file
+// or an error. Standard C requires this to be a negative integer constant
+// expression that fits in an int.
+#define EOF (-1)
+
 FILE *fopen(const char *filename, const char *mode);
 int   fclose(FILE *stream);
 int   fseek(FILE *stream, long offset, int whence);
