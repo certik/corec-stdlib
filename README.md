@@ -115,8 +115,8 @@ intentionally not provided yet — when something is needed, add it (see
 | `<stdarg.h>` | `va_list`, `va_start`, `va_arg`, `va_end`, `va_copy` (compiler builtins). |
 | `<stdbool.h>` | `bool`, `true`, `false`. |
 | `<stddef.h>` | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. |
-| `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros. |
-| `<stdio.h>` | `printf`, `vprintf`, `snprintf`, `vsnprintf`; `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `fwrite`, `fputc`, `fputs`, `SEEK_SET`/`CUR`/`END`. |
+| `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `INTn_MIN`/`INTn_MAX`/`UINTn_MAX` for `n ∈ {8,16,32,64}`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros. |
+| `<stdio.h>` | `printf`, `vprintf`, `snprintf`, `vsnprintf`; `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `fwrite`, `fputc`, `fputs`, `SEEK_SET`/`CUR`/`END`, `EOF`. |
 | `<stdlib.h>` | `malloc`, `free`, `exit`, `abort`, `atoi`, `atoll`, `atof`, `rand`, `srand`, `RAND_MAX`, `EXIT_SUCCESS`, `EXIT_FAILURE`, `NULL`. |
 | `<string.h>` | `strlen`, `strcpy`, `strncpy`, `strcmp`, `strncmp`, `strchr`, `strrchr`, `strstr`, `strcspn`, `memcpy`, `memmove`, `memcmp`, `memset`, `memchr`. |
 
