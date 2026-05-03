@@ -19,6 +19,7 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
@@ -27,7 +28,6 @@ clang \
     -Wl,--export=_start \
     -Wl,--initial-memory=131072 \
     -o corec_stdlib_test.wasm \
-    tests.c \
     test_stdlib.c \
     stdlib/stdio.c \
     stdlib/stdlib.c \
@@ -46,7 +46,7 @@ clang \
     corec/base/exit.c \
     corec/platform/platform_wasm.c
 """, inputs = [
-    "tests.c", "test_stdlib.c", "test_stdlib.h",
+    "test_stdlib.c",
     "stdlib/**/*.c", "stdlib/**/*.h",
     "corec/base/**/*.c", "corec/base/**/*.h",
     "corec/platform/platform_wasm.c", "corec/platform/platform.h",
@@ -68,11 +68,11 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
     -o corec_stdlib_test_linux \
-    tests.c \
     test_stdlib.c \
     stdlib/stdio.c \
     stdlib/stdlib.c \
@@ -107,11 +107,11 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
     -o corec_stdlib_test_macos \
-    tests.c \
     test_stdlib.c \
     stdlib/stdio.c \
     stdlib/stdlib.c \
@@ -145,6 +145,7 @@ cl \
     /X \
     /std:c11 \
     /Zc:preprocessor \
+    /Dmain=app_main \
     /I"corec" \
     /I"stdlib" \
     /I"." \
@@ -152,7 +153,6 @@ cl \
     /Gs0 \
     /kernel \
     /c \
-    tests.c \
     test_stdlib.c \
     stdlib/stdio.c \
     stdlib/stdlib.c \
@@ -178,7 +178,6 @@ link \
     /entry:_start \
     kernel32.lib \
     shell32.lib \
-    tests.obj \
     test_stdlib.obj \
     stdio.obj \
     stdlib.obj \

@@ -1,9 +1,19 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <test_stdlib.h>
+
+// MSVC's CRT marks several standard C functions (strcpy, sprintf, ...) as
+// deprecated under warning C4996, suggesting the non-portable Microsoft
+// "_s" variants instead. This file deliberately exercises the standard
+// names — that is the whole point of the test — so we silence C4996
+// for this translation unit. The behavior we test is still the standard
+// C behavior; the warning is purely Microsoft style guidance.
+#ifdef _MSC_VER
+#pragma warning(disable: 4996)
+#endif
 
 // Helper function to test string equality
 static void test_streq(const char *actual, const char *expected, const char *test_name) {
@@ -98,8 +108,8 @@ static void test_printf_formats(void) {
     printf("Test %%d positive: %d\n", 42);
     printf("Test %%d negative: %d\n", -42);
     printf("Test %%d zero: %d\n", 0);
-    printf("Test %%d max int: %d\n", 2147483647);
-    printf("Test %%d min int: %d\n", -2147483648);
+    printf("Test %%d max int: %d\n", INT_MAX);
+    printf("Test %%d min int: %d\n", INT_MIN);
 
     // Unsigned integers
     printf("Test %%u: %u\n", 42);
@@ -157,7 +167,7 @@ static void test_assert(void) {
 }
 
 // Main stdlib test function
-void test_stdlib(void) {
+static void test_stdlib(void) {
     printf("=== stdlib tests ===\n");
 
     test_string_functions();
@@ -170,4 +180,10 @@ void test_stdlib(void) {
     printf("\n");
 
     printf("stdlib tests passed\n\n");
+}
+
+int main(void) {
+    test_stdlib();
+    printf("=== All tests passed ===\n");
+    return 0;
 }
