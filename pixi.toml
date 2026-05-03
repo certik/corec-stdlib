@@ -1,0 +1,215 @@
+[workspace]
+authors = ["Ondřej Čertík <ondrej@certik.us>"]
+channels = [
+    "https://prefix.dev/certik-forge",
+    "conda-forge",
+]
+name = "corec-stdlib"
+platforms = ["osx-arm64", "linux-64", "win-64"]
+version = "0.1.0"
+
+#=============================================================================
+# WebAssembly (WASI)
+#=============================================================================
+[feature.wasm.tasks]
+build_wasm = { cmd = """
+clang \
+    --target=wasm32-wasi \
+    -Os \
+    -nostdlib \
+    -nostdinc \
+    -fno-builtin \
+    -I corec \
+    -I stdlib \
+    -I . \
+    -Wl,--no-entry \
+    -Wl,--export=__heap_base \
+    -Wl,--export=_start \
+    -Wl,--initial-memory=131072 \
+    -o corec_stdlib_test.wasm \
+    tests.c \
+    test_stdlib.c \
+    stdlib/stdio.c \
+    stdlib/stdlib.c \
+    stdlib/printf.c \
+    stdlib/string_impl.c \
+    corec/base/io.c \
+    corec/base/buddy.c \
+    corec/base/arena.c \
+    corec/base/scratch.c \
+    corec/base/format.c \
+    corec/base/math.c \
+    corec/base/string.c \
+    corec/base/mem.c \
+    corec/base/numconv.c \
+    corec/base/assert.c \
+    corec/base/exit.c \
+    corec/platform/platform_wasm.c
+""", inputs = [
+    "tests.c", "test_stdlib.c", "test_stdlib.h",
+    "stdlib/**/*.c", "stdlib/**/*.h",
+    "corec/base/**/*.c", "corec/base/**/*.h",
+    "corec/platform/platform_wasm.c", "corec/platform/platform.h",
+], outputs = ["corec_stdlib_test.wasm"], description = "Build corec_stdlib_test.wasm (wasm32-wasi target)" }
+
+test_wasm = { cmd = "wasmtime --dir . corec_stdlib_test.wasm", depends-on = ["build_wasm"], description = "Run corec_stdlib_test.wasm under wasmtime" }
+
+[feature.wasm.dependencies]
+clang = ">=20.1.4,<21"
+lld = ">=20.1.4,<21"
+wasmtime = ">=38.0.3,<39"
+
+#=============================================================================
+# Linux
+#=============================================================================
+[feature.linux.tasks]
+build_linux = { cmd = """
+clang \
+    -nostdlib \
+    -nostdinc \
+    -fno-builtin \
+    -I corec \
+    -I stdlib \
+    -I . \
+    -o corec_stdlib_test_linux \
+    tests.c \
+    test_stdlib.c \
+    stdlib/stdio.c \
+    stdlib/stdlib.c \
+    stdlib/printf.c \
+    stdlib/string_impl.c \
+    corec/base/io.c \
+    corec/base/buddy.c \
+    corec/base/arena.c \
+    corec/base/scratch.c \
+    corec/base/format.c \
+    corec/base/math.c \
+    corec/base/string.c \
+    corec/base/mem.c \
+    corec/base/numconv.c \
+    corec/base/assert.c \
+    corec/base/exit.c \
+    corec/platform/platform_linux.c
+""", description = "Build corec_stdlib_test_linux native binary (Linux only)" }
+
+test_linux = { cmd = "./corec_stdlib_test_linux", depends-on = ["build_linux"], description = "Run corec_stdlib_test_linux native test binary" }
+
+[feature.linux.target.linux-64.dependencies]
+clang = ">=20.1.4,<21"
+
+#=============================================================================
+# macOS
+#=============================================================================
+[feature.macos.tasks]
+build_macos = { cmd = """
+clang \
+    -g \
+    -nostdlib \
+    -nostdinc \
+    -fno-builtin \
+    -I corec \
+    -I stdlib \
+    -I . \
+    -o corec_stdlib_test_macos \
+    tests.c \
+    test_stdlib.c \
+    stdlib/stdio.c \
+    stdlib/stdlib.c \
+    stdlib/printf.c \
+    stdlib/string_impl.c \
+    corec/base/io.c \
+    corec/base/buddy.c \
+    corec/base/arena.c \
+    corec/base/scratch.c \
+    corec/base/format.c \
+    corec/base/math.c \
+    corec/base/string.c \
+    corec/base/mem.c \
+    corec/base/numconv.c \
+    corec/base/assert.c \
+    corec/base/exit.c \
+    corec/platform/platform_macos.c \
+    -lSystem \
+    -Wl,-e,__start
+""", description = "Build corec_stdlib_test_macos native binary (macOS only)" }
+
+test_macos = { cmd = "./corec_stdlib_test_macos", depends-on = ["build_macos"], description = "Run corec_stdlib_test_macos native test binary" }
+
+#=============================================================================
+# Windows
+#=============================================================================
+[feature.windows.tasks]
+build_windows = { cmd = """
+cl \
+    /nologo \
+    /X \
+    /std:c11 \
+    /Zc:preprocessor \
+    /I"corec" \
+    /I"stdlib" \
+    /I"." \
+    /GS- \
+    /Gs0 \
+    /kernel \
+    /c \
+    tests.c \
+    test_stdlib.c \
+    stdlib/stdio.c \
+    stdlib/stdlib.c \
+    stdlib/printf.c \
+    stdlib/string_impl.c \
+    corec/base/io.c \
+    corec/base/buddy.c \
+    corec/base/arena.c \
+    corec/base/scratch.c \
+    corec/base/format.c \
+    corec/base/math.c \
+    corec/base/string.c \
+    corec/base/mem.c \
+    corec/base/numconv.c \
+    corec/base/assert.c \
+    corec/base/exit.c \
+    corec/platform/platform_windows.c \
+    && \
+link \
+    /nologo \
+    /subsystem:console \
+    /nodefaultlib \
+    /entry:_start \
+    kernel32.lib \
+    shell32.lib \
+    tests.obj \
+    test_stdlib.obj \
+    stdio.obj \
+    stdlib.obj \
+    printf.obj \
+    string_impl.obj \
+    io.obj \
+    buddy.obj \
+    arena.obj \
+    scratch.obj \
+    format.obj \
+    math.obj \
+    string.obj \
+    mem.obj \
+    numconv.obj \
+    assert.obj \
+    exit.obj \
+    platform_windows.obj \
+    /out:corec_stdlib_test_windows.exe
+""", description = "Build corec_stdlib_test_windows.exe native binary (Windows only; requires MSVC vcvars64)" }
+
+test_windows = { cmd = "./corec_stdlib_test_windows.exe", depends-on = ["build_windows"], description = "Run corec_stdlib_test_windows.exe native test binary" }
+
+[feature.windows.target.win-64.dependencies]
+# MSVC must be available on PATH (e.g. via vcvars64.bat)
+
+[dependencies]
+shell = "*"
+
+[environments]
+default = { solve-group = "default" }
+wasm = ["wasm"]
+linux = { features = ["linux"], solve-group = "linux" }
+macos = { features = ["macos"], solve-group = "macos" }
+windows = { features = ["windows"], solve-group = "windows" }

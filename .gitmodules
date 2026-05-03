@@ -1,0 +1,3 @@
+[submodule "corec"]
+	path = corec
+	url = https://github.com/certik/corec
