@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <base/io.h>
 
 // Helper function to test string equality
 static void test_streq(const char *actual, const char *expected, const char *test_name) {
@@ -98,8 +98,8 @@ static void test_printf_formats(void) {
     printf("Test %%d positive: %d\n", 42);
     printf("Test %%d negative: %d\n", -42);
     printf("Test %%d zero: %d\n", 0);
-    printf("Test %%d max int: %d\n", 2147483647);
-    printf("Test %%d min int: %d\n", -2147483648);
+    printf("Test %%d max int: %d\n", INT_MAX);
+    printf("Test %%d min int: %d\n", INT_MIN);
 
     // Unsigned integers
     printf("Test %%u: %u\n", 42);
@@ -172,9 +172,8 @@ static void test_stdlib(void) {
     printf("stdlib tests passed\n\n");
 }
 
-int app_main(void) {
+int main(void) {
     test_stdlib();
-
-    println(str_lit("=== All tests passed ==="));
+    printf("=== All tests passed ===\n");
     return 0;
 }

@@ -37,6 +37,20 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Test against host stdlib (Unix)
+        if: matrix.platform != 'windows'
+        run: |
+          cc -Wall -Wextra -Werror test_stdlib.c -o test_stdlib_host
+          ./test_stdlib_host
+
+      - name: Test against host stdlib (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
+          cl /nologo /WX /W3 test_stdlib.c /Fe:test_stdlib_host.exe || exit /b 1
+          test_stdlib_host.exe || exit /b 1
+        shell: cmd
+
       - uses: prefix-dev/setup-pixi@v0.9.4
         with:
           pixi-version: v0.65.0

@@ -19,6 +19,7 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
@@ -67,6 +68,7 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
@@ -105,6 +107,7 @@ clang \
     -nostdlib \
     -nostdinc \
     -fno-builtin \
+    -Dmain=app_main \
     -I corec \
     -I stdlib \
     -I . \
@@ -142,6 +145,7 @@ cl \
     /X \
     /std:c11 \
     /Zc:preprocessor \
+    /Dmain=app_main \
     /I"corec" \
     /I"stdlib" \
     /I"." \

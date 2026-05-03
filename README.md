@@ -42,8 +42,22 @@ WASI-compatible runtime.
 
 ## Continuous Integration
 
-GitHub Actions runs the full test suite — native binary on Linux, macOS, and
-Windows, plus WebAssembly via `wasmtime` — on every push and PR. See
+GitHub Actions runs the test suite on Linux, macOS, and Windows on every push
+and PR. Each platform runs `test_stdlib.c` twice:
+
+1. **Against the host's standard library**, compiled with the system C
+   compiler (`cc` / `cl.exe`) and linked against the platform's libc. This
+   catches incorrect tests — if the test passes here, the behavior it asserts
+   matches what the C standard library is supposed to do.
+2. **Against this repository's stdlib subset**, compiled with `-nostdlib
+   -nostdinc -fno-builtin` on top of `corec/`. This catches bugs in our
+   implementation.
+
+The same `test_stdlib.c` source is used in both cases — the nostdlib build
+just adds `-Dmain=app_main` so corec's platform layer can call into it as
+its entry point.
+
+The nostdlib pass also runs the WebAssembly build under `wasmtime`. See
 `.github/workflows/CI.yml`.
 
 ## Contributing / extending
