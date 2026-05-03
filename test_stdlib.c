@@ -5,6 +5,16 @@
 #include <stdio.h>
 #include <assert.h>
 
+// MSVC's CRT marks several standard C functions (strcpy, sprintf, ...) as
+// deprecated under warning C4996, suggesting the non-portable Microsoft
+// "_s" variants instead. This file deliberately exercises the standard
+// names — that is the whole point of the test — so we silence C4996
+// for this translation unit. The behavior we test is still the standard
+// C behavior; the warning is purely Microsoft style guidance.
+#ifdef _MSC_VER
+#pragma warning(disable: 4996)
+#endif
+
 // Helper function to test string equality
 static void test_streq(const char *actual, const char *expected, const char *test_name) {
     size_t i = 0;
