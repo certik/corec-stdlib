@@ -9,8 +9,8 @@ linking against the host platform's libc.
 
 Concretely, this repository provides a small subset of `<stdio.h>`,
 `<stdlib.h>`, `<string.h>`, `<assert.h>`, `<stdint.h>`, `<stddef.h>`,
-`<stdarg.h>`, `<stdbool.h>`, `<ctype.h>`, `<float.h>`, `<limits.h>`, plus a
-custom `<printf.h>`, all implemented as thin wrappers around
+`<stdarg.h>`, `<stdbool.h>`, `<ctype.h>`, `<float.h>` and `<limits.h>`,
+all implemented as thin wrappers around
 [`corec`](https://github.com/certik/corec)'s `base/` and `platform/` layers.
 Programs that use it still build with `-nostdlib -nostdinc -fno-builtin`;
 the names just look familiar.
@@ -91,8 +91,8 @@ corec-stdlib/
 │   ├── stdbool.h
 │   ├── stddef.h
 │   ├── stdint.h
-│   ├── stdio.h    stdio.c    # FILE I/O
-│   ├── stdlib.h   stdlib.c   # malloc, exit, ato*, rand, snprintf
+│   ├── stdio.h    stdio.c    # FILE I/O + snprintf/vsnprintf
+│   ├── stdlib.h   stdlib.c   # malloc, exit, ato*, rand
 │   ├── string.h   string_impl.c
 │   └── printf.c              # printf/vprintf (declared in stdio.h)
 ├── test_stdlib.c           # Conformance tests + example port
