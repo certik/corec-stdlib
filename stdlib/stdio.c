@@ -1,24 +1,28 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include <base/io.h>
 #include <platform/platform.h>
 
-// FILE structure wrapping a WASI file descriptor
+// FILE structure wrapping a corec platform file descriptor
 typedef struct FILE {
     platform_fd_t fd;
     int eof;
     int error;
 } FILE;
 
-// Statically allocate a few FILE structures
-static FILE file_pool[16];
+// Statically allocate a small pool of FILE structures.
+// Increase if needed; allocating dynamically would require malloc/free here,
+// which we deliberately avoid in the stdio layer.
+#define FILE_POOL_SIZE 16
+static FILE file_pool[FILE_POOL_SIZE];
 static int file_pool_initialized = 0;
 
-static void init_file_pool() {
+static void init_file_pool(void) {
     if (!file_pool_initialized) {
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < FILE_POOL_SIZE; i++) {
             file_pool[i].fd = -1;
             file_pool[i].eof = 0;
             file_pool[i].error = 0;
@@ -29,7 +33,7 @@ static void init_file_pool() {
 
 static FILE* alloc_file(platform_fd_t fd) {
     init_file_pool();
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < FILE_POOL_SIZE; i++) {
         if (file_pool[i].fd == -1) {
             file_pool[i].fd = fd;
             file_pool[i].eof = 0;
@@ -152,7 +156,4 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return nread / size;
 }
 
-// stdlib/stdio.c now reuses printf/vprintf from stdlib/printf.c
-// This avoids code duplication and ensures consistent behavior
-
-#include <printf.h>
+// printf / vprintf live in printf.c; snprintf / vsnprintf live in stdlib.c.

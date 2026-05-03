@@ -1,5 +1,17 @@
-// stdlib string.c - wrappers around base/mem.h functions
-// Provides standard C library names for nostdlib builds
+// stdlib/string_impl.c — wrappers exposing the standard <string.h> names
+// (memcpy, strlen, ...) on top of corec's base_* implementations.
+//
+// File name: this file is named string_impl.c (not string.c) because on
+// Windows MSVC the object file basename collides with corec/base/string.c's
+// string.obj when both end up in the same link.
+//
+// Note on memcpy/memset: the compiler may emit *implicit* calls to memcpy
+// and memset even with -fno-builtin (e.g. for struct copies, array
+// initializers, or memcpy intrinsics in libcalls). The corec platform
+// layer therefore also provides memcpy/memset where required (with weak
+// linkage on Linux, so this file's strong definitions take precedence).
+// We define them here unconditionally — every nostdlib build that links
+// stdlib/string_impl.c will get one, and only one, real symbol.
 
 #include <string.h>
 #include <base/mem.h>
@@ -28,8 +40,9 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     return base_memcmp(s1, s2, n);
 }
 
-// Note: memset() is defined in base/mem.c, not here, because the compiler
-// can implicitly insert calls to it even with -fno-builtin.
+void *memset(void *s, int c, size_t n) {
+    return base_memset(s, c, n);
+}
 
 void *memchr(const void *s, int c, size_t n) {
     return base_memchr(s, c, n);
