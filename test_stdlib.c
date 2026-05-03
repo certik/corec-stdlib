@@ -292,6 +292,86 @@ static void test_snprintf(void) {
 }
 
 // -----------------------------------------------------------------------
+// <stdio.h> — FILE I/O round-trip
+// -----------------------------------------------------------------------
+
+// Write a known payload to a file with fopen/fwrite/fputc/fputs/fclose,
+// then read it back with fopen/fseek/ftell/fread/fclose and verify the
+// content byte for byte. This exercises every FILE function we expose.
+//
+// On WASM the build runs under `wasmtime --dir .`, so this also validates
+// that file I/O is wired through to WASI properly.
+static void test_file_io(void) {
+    const char *path = "test_stdlib_scratch.bin";
+
+    // ---- Write phase ----
+    FILE *out = fopen(path, "wb");
+    assert(out != NULL);
+
+    const char hello[] = "hello"; // 5 bytes, no null
+    size_t nw = fwrite(hello, 1, 5, out);
+    assert(nw == 5);
+
+    int fc = fputc(' ', out);
+    assert(fc == ' ');
+
+    int fs = fputs("world", out);
+    assert(fs >= 0);
+
+    // 12 bytes of binary: 0..11
+    unsigned char bin[12];
+    for (int i = 0; i < 12; i++) bin[i] = (unsigned char)i;
+    nw = fwrite(bin, 1, sizeof(bin), out);
+    assert(nw == sizeof(bin));
+
+    int rc = fclose(out);
+    assert(rc == 0);
+
+    // ---- Read phase ----
+    FILE *in = fopen(path, "rb");
+    assert(in != NULL);
+
+    // ftell at start == 0
+    long pos = ftell(in);
+    assert(pos == 0);
+
+    // Read first 11 bytes ("hello world").
+    char buf[16];
+    size_t nr = fread(buf, 1, 11, in);
+    assert(nr == 11);
+    buf[11] = '\0';
+    check_streq(buf, "hello world", "fread text");
+
+    // ftell after 11 bytes
+    pos = ftell(in);
+    assert(pos == 11);
+
+    // Read the 12 binary bytes
+    unsigned char bin_back[12];
+    nr = fread(bin_back, 1, sizeof(bin_back), in);
+    assert(nr == sizeof(bin_back));
+    for (int i = 0; i < 12; i++) assert(bin_back[i] == (unsigned char)i);
+
+    // EOF: next read returns 0
+    char eof_buf[4];
+    nr = fread(eof_buf, 1, sizeof(eof_buf), in);
+    assert(nr == 0);
+
+    // SEEK_SET back to start; ftell should be 0
+    int sk = fseek(in, 0, SEEK_SET);
+    assert(sk == 0);
+    assert(ftell(in) == 0);
+
+    // SEEK_END to file end; ftell should be total length (5+1+5+12 = 23).
+    sk = fseek(in, 0, SEEK_END);
+    assert(sk == 0);
+    assert(ftell(in) == 23);
+
+    rc = fclose(in);
+    assert(rc == 0);
+}
+
+// -----------------------------------------------------------------------
 // <stdlib.h>
 // -----------------------------------------------------------------------
 
@@ -444,6 +524,7 @@ static void run_tests(void) {
     test_printf_formats();
     test_printf_return();
     test_snprintf();
+    test_file_io();
 
     printf("## <stdlib.h>\n");
     test_atoi();
