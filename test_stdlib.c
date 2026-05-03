@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <test_stdlib.h>
+#include <base/io.h>
 
 // Helper function to test string equality
 static void test_streq(const char *actual, const char *expected, const char *test_name) {
@@ -157,7 +157,7 @@ static void test_assert(void) {
 }
 
 // Main stdlib test function
-void test_stdlib(void) {
+static void test_stdlib(void) {
     printf("=== stdlib tests ===\n");
 
     test_string_functions();
@@ -170,4 +170,11 @@ void test_stdlib(void) {
     printf("\n");
 
     printf("stdlib tests passed\n\n");
+}
+
+int app_main(void) {
+    test_stdlib();
+
+    println(str_lit("=== All tests passed ==="));
+    return 0;
 }

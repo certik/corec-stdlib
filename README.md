@@ -17,8 +17,7 @@ adds the standard-library names that wrap them.
 * `corec/` — the [Core C](https://github.com/certik/corec) submodule
   (provides `platform/` and `base/`).
 * `stdlib/` — C standard library subset headers and implementation files.
-* `tests.c`, `test_stdlib.c`, `test_stdlib.h` — test entry point and
-  stdlib test suite.
+* `test_stdlib.c` — test entry point and stdlib test suite.
 
 ## Build & test
 
