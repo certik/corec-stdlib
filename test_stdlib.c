@@ -289,6 +289,28 @@ static void test_snprintf(void) {
     n = snprintf(untouched, 0, "abc");
     (void)n;
     assert(untouched[0] == 'Z');
+
+    // %e: scientific notation. Basic positive, negative, and zero cases at
+    // default precision (6).
+    n = snprintf(buf, sizeof(buf), "%.6e", 1.0);
+    assert(n == 12);
+    check_streq(buf, "1.000000e+00", "snprintf %e one");
+
+    n = snprintf(buf, sizeof(buf), "%.6e", -1.5);
+    check_streq(buf, "-1.500000e+00", "snprintf %e neg");
+
+    n = snprintf(buf, sizeof(buf), "%.6e", 0.0);
+    check_streq(buf, "0.000000e+00", "snprintf %e zero");
+
+    n = snprintf(buf, sizeof(buf), "%.6e", 1.0e20);
+    check_streq(buf, "1.000000e+20", "snprintf %e big");
+
+    n = snprintf(buf, sizeof(buf), "%.6e", 1.0e-20);
+    check_streq(buf, "1.000000e-20", "snprintf %e tiny");
+
+    // %e at non-default precision.
+    n = snprintf(buf, sizeof(buf), "%.2e", 12345.0);
+    check_streq(buf, "1.23e+04", "snprintf %e prec2");
 }
 
 // -----------------------------------------------------------------------
