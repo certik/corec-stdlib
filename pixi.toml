@@ -135,6 +135,10 @@ clang \
 
 test_macos = { cmd = "./corec_stdlib_test_macos", depends-on = ["build_macos"], description = "Run corec_stdlib_test_macos native test binary" }
 
+build_macos_tinyc = { cmd = "bash scripts/build_macos_tinyc.sh", description = "Build corec_stdlib_test_macos_tinyc using the tinyC compiler (../mlir/tinyc) for compile and clang for link (macOS only)" }
+
+test_macos_tinyc = { cmd = "./corec_stdlib_test_macos_tinyc", depends-on = ["build_macos_tinyc"], description = "Run corec_stdlib_test_macos_tinyc test binary built with tinyC" }
+
 #=============================================================================
 # Windows
 #=============================================================================

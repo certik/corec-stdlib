@@ -8,7 +8,9 @@
 *.dSYM/
 corec_stdlib_test_linux
 corec_stdlib_test_macos
+corec_stdlib_test_macos_tinyc
 corec_stdlib_test_windows
+build_tinyc/
 test_stdlib_host
 test_stdlib_host.exe
 test_stdlib_scratch.bin
