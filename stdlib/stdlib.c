@@ -16,14 +16,43 @@ void* malloc(size_t size) {
         // return NULL because corec's buddy_alloc asserts on size==0.
         return NULL;
     }
-    return buddy_alloc(size, NULL);
+    // Tag each block with a header recording the user-requested size,
+    // so realloc() knows how much to copy. The user pointer is offset
+    // past the header.
+    typedef struct { size_t size; } mhdr_t;
+    mhdr_t *hdr = (mhdr_t *)buddy_alloc(size + sizeof(mhdr_t), NULL);
+    if (!hdr) return NULL;
+    hdr->size = size;
+    return (void *)(hdr + 1);
 }
 
 void free(void* ptr) {
     if (!ptr) {
         return;
     }
-    buddy_free(ptr);
+    typedef struct { size_t size; } mhdr_t;
+    buddy_free(((mhdr_t *)ptr) - 1);
+}
+
+void *calloc(size_t nmemb, size_t size) {
+    size_t total = nmemb * size;
+    if (total == 0) return NULL;
+    void *p = malloc(total);
+    if (p) memset(p, 0, total);
+    return p;
+}
+
+void *realloc(void *ptr, size_t new_size) {
+    if (!ptr) return malloc(new_size);
+    if (new_size == 0) { free(ptr); return NULL; }
+    typedef struct { size_t size; } mhdr_t;
+    mhdr_t *hdr = ((mhdr_t *)ptr) - 1;
+    size_t old_size = hdr->size;
+    void *q = malloc(new_size);
+    if (!q) return NULL;
+    memcpy(q, ptr, old_size < new_size ? old_size : new_size);
+    free(ptr);
+    return q;
 }
 
 void exit(int status) {
@@ -32,6 +61,14 @@ void exit(int status) {
 
 void abort(void) {
     base_abort();
+}
+
+char *getenv(const char *name) {
+    // The wasm32-wasi backend doesn't expose an environment to the
+    // module. Returning NULL is consistent with "variable not set",
+    // which most callers handle correctly.
+    (void)name;
+    return NULL;
 }
 
 // Linear Congruential Generator (LCG)
