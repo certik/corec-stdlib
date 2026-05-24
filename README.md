@@ -115,7 +115,7 @@ intentionally not provided yet — when something is needed, add it (see
 | `<stdarg.h>` | `va_list`, `va_start`, `va_arg`, `va_end`, `va_copy` (compiler builtins). |
 | `<stdbool.h>` | `bool`, `true`, `false`. |
 | `<stddef.h>` | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. |
-| `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `INTn_MIN`/`INTn_MAX`/`UINTn_MAX` for `n ∈ {8,16,32,64}`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros. |
+| `<stdint.h>` | `int8_t`..`int64_t`, `uint8_t`..`uint64_t`, `uintptr_t`, `size_t`, `INTn_MIN`/`INTn_MAX`/`UINTn_MAX` for `n ∈ {8,16,32,64}`, `SIZE_MAX`, `INTNN_C` / `UINTNN_C` macros (including `INTMAX_C` / `UINTMAX_C`). |
 | `<stdio.h>` | `printf`, `vprintf`, `fprintf`, `vfprintf`, `sprintf`, `vsprintf`, `snprintf`, `vsnprintf`; `FILE*` I/O — `fopen`, `fclose`, `fseek`, `ftell`, `fread`, `fwrite`, `fputc`, `fputs`, `SEEK_SET`/`CUR`/`END`, `EOF`; standard streams `stdin`, `stdout`, `stderr`. |
 | `<stdlib.h>` | `malloc`, `calloc`, `realloc`, `free`, `exit`, `abort`, `getenv`, `atoi`, `atoll`, `atof`, `rand`, `srand`, `RAND_MAX`, `EXIT_SUCCESS`, `EXIT_FAILURE`, `NULL`. |
 | `<string.h>` | `strlen`, `strcpy`, `strncpy`, `strcmp`, `strncmp`, `strchr`, `strrchr`, `strstr`, `strcspn`, `memcpy`, `memmove`, `memcmp`, `memset`, `memchr`. |
