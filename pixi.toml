@@ -52,7 +52,7 @@ clang \
     "corec/platform/platform_wasm.c", "corec/platform/platform.h",
 ], outputs = ["corec_stdlib_test.wasm"], description = "Build corec_stdlib_test.wasm (wasm32-wasi target)" }
 
-test_wasm = { cmd = "wasmtime --dir . corec_stdlib_test.wasm", depends-on = ["build_wasm"], description = "Run corec_stdlib_test.wasm under wasmtime" }
+test_wasm = { cmd = "wasmtime --dir . --env COREC_TEST_ENV corec_stdlib_test.wasm", depends-on = ["build_wasm"], description = "Run corec_stdlib_test.wasm under wasmtime" }
 
 [feature.wasm.dependencies]
 clang = ">=20.1.4,<21"

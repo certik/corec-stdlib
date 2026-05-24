@@ -32,6 +32,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Test ${{ matrix.platform }}
 
+    env:
+      # test_getenv() in test_stdlib.c asserts that getenv("COREC_TEST_ENV")
+      # returns "corec_test_value", so it must be set in the environment of
+      # every test invocation — host stdlib, the nostdlib native build, and
+      # the wasmtime run (the test_wasm pixi task is configured with
+      # `--env COREC_TEST_ENV` to inherit it from the calling shell).
+      COREC_TEST_ENV: corec_test_value
+
     steps:
       - uses: actions/checkout@v6.0.2
         with:

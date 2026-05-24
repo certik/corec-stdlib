@@ -64,10 +64,54 @@ void abort(void) {
 }
 
 char *getenv(const char *name) {
-    // The wasm32-wasi backend doesn't expose an environment to the
-    // module. Returning NULL is consistent with "variable not set",
-    // which most callers handle correctly.
-    (void)name;
+    // Lazily fetch the platform's environment block on the first call and
+    // keep it alive for the lifetime of the program. The platform layer
+    // returns the environment as a NUL-separated byte buffer plus a table
+    // of pointers into that buffer; we hand callers a pointer into that
+    // buffer just past the '=' separator. The buffer is owned by us, so
+    // callers must treat the returned pointer as read-only and must not
+    // free it (matching the contract of POSIX getenv).
+    static int initialized = 0;
+    static size_t env_count = 0;
+    static char **env_ptrs = NULL;
+    static char *env_buf = NULL;
+
+    if (!initialized) {
+        initialized = 1;
+        size_t buf_size = 0;
+        if (platform_environ_sizes_get(&env_count, &buf_size) != 0) {
+            env_count = 0;
+        } else if (env_count > 0) {
+            env_ptrs = (char **)malloc(env_count * sizeof(char *));
+            env_buf = (char *)malloc(buf_size);
+            if (!env_ptrs || !env_buf ||
+                platform_environ_get(env_ptrs, env_buf) != 0) {
+                env_count = 0;
+            }
+        }
+    }
+
+    if (!name) return NULL;
+
+    size_t name_len = 0;
+    while (name[name_len] != '\0') {
+        // Per POSIX, getenv with a name containing '=' returns NULL. This
+        // also keeps us from accidentally matching Windows's hidden
+        // "=DRIVE:=..." style entries (whose key is the empty string)
+        // when the caller passes an empty name.
+        if (name[name_len] == '=') return NULL;
+        name_len++;
+    }
+    if (name_len == 0) return NULL;
+
+    for (size_t i = 0; i < env_count; i++) {
+        char *entry = env_ptrs[i];
+        size_t k = 0;
+        while (k < name_len && entry[k] != '\0' && entry[k] == name[k]) k++;
+        if (k == name_len && entry[k] == '=') {
+            return entry + name_len + 1;
+        }
+    }
     return NULL;
 }
 

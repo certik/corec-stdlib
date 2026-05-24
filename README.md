@@ -127,9 +127,6 @@ provided by `corec/base/numconv.c`'s `base_vsnprintf`:
 `%p`, `%c`, `%s`, `%f`, `%.Nf`, `%%`.
 Width specifiers (e.g. `%5d`, `%-10s`) are not supported.
 
-`getenv` is a stub that always returns `NULL` — wasm32-wasi modules
-have no environment block, and most callers treat `NULL` as "not set".
-
 ## Build & test
 
 All builds are driven by [pixi](https://pixi.sh). Make sure the submodule
