@@ -204,7 +204,7 @@ link \
 
 test_windows = { cmd = "./corec_stdlib_test_windows.exe", depends-on = ["build_windows"], description = "Run corec_stdlib_test_windows.exe native test binary" }
 
-test_host = { cmd = "cl /nologo /WX /W3 test_stdlib.c /Fe:test_stdlib_host.exe && test_stdlib_host.exe", description = "Build and run test_stdlib.c against the host's C standard library (Windows; requires MSVC vcvars64)" }
+test_host = { cmd = "cl /nologo /WX /W3 test_stdlib.c /Fe:test_stdlib_host.exe && ./test_stdlib_host.exe", description = "Build and run test_stdlib.c against the host's C standard library (Windows; requires MSVC vcvars64)" }
 
 [feature.windows.target.win-64.dependencies]
 # MSVC must be available on PATH (e.g. via vcvars64.bat)
