@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -314,6 +315,97 @@ static void test_snprintf(void) {
 }
 
 // -----------------------------------------------------------------------
+// <stdio.h> — sprintf / vsprintf
+// -----------------------------------------------------------------------
+
+// Forwarding helper so the test actually exercises vsprintf (the format
+// string and arguments come through a va_list).
+static int call_vsprintf(char *buf, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int n = vsprintf(buf, fmt, ap);
+    va_end(ap);
+    return n;
+}
+
+static void test_sprintf(void) {
+    char buf[64];
+    int n;
+
+    n = sprintf(buf, "hi");
+    assert(n == 2);
+    check_streq(buf, "hi", "sprintf simple");
+
+    n = sprintf(buf, "%d", 42);
+    assert(n == 2);
+    check_streq(buf, "42", "sprintf %d");
+
+    n = sprintf(buf, "%d-%s-%c", -7, "ok", 'A');
+    assert(n == 7);
+    check_streq(buf, "-7-ok-A", "sprintf compound");
+
+    n = call_vsprintf(buf, "v=%d", 99);
+    assert(n == 4);
+    check_streq(buf, "v=99", "vsprintf");
+}
+
+// -----------------------------------------------------------------------
+// <stdio.h> — fprintf / vfprintf / stdin / stdout / stderr
+// -----------------------------------------------------------------------
+
+// Forwarding helper so the test actually exercises vfprintf.
+static int call_vfprintf(FILE *stream, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int n = vfprintf(stream, fmt, ap);
+    va_end(ap);
+    return n;
+}
+
+// Write formatted output to a file with fprintf/vfprintf, then read it
+// back byte-for-byte and verify the content.
+static void test_fprintf_file(void) {
+    const char *path = "test_stdlib_scratch.bin";
+
+    FILE *out = fopen(path, "wb");
+    assert(out != NULL);
+
+    int n = fprintf(out, "x=%d y=%s\n", 42, "abc");
+    assert(n == 11);
+
+    n = call_vfprintf(out, "[%d]", 7);
+    assert(n == 3);
+
+    int rc = fclose(out);
+    assert(rc == 0);
+
+    FILE *in = fopen(path, "rb");
+    assert(in != NULL);
+    char buf[32];
+    size_t nr = fread(buf, 1, sizeof(buf) - 1, in);
+    assert(nr == 14);
+    buf[nr] = '\0';
+    check_streq(buf, "x=42 y=abc\n[7]", "fprintf file");
+    rc = fclose(in);
+    assert(rc == 0);
+}
+
+// stdin / stdout / stderr macros must yield non-NULL FILE * objects, and
+// fprintf to stdout / stderr must accept them. We deliberately do not
+// assert on the return value of fprintf-to-stdout because output on those
+// streams may be redirected by the runtime (e.g. wasmtime).
+static void test_std_streams(void) {
+    assert(stdin  != NULL);
+    assert(stdout != NULL);
+    assert(stderr != NULL);
+
+    int n = fprintf(stdout, "fprintf stdout: %d\n", 1);
+    assert(n == 18);
+    n = fprintf(stderr, "fprintf stderr: %d\n", 2);
+    assert(n == 18);
+}
+
+// -----------------------------------------------------------------------
 // <stdio.h> — FILE I/O round-trip
 // -----------------------------------------------------------------------
 
@@ -446,6 +538,60 @@ static void test_malloc_free(void) {
     free(NULL); // must be a no-op
 }
 
+static void test_calloc(void) {
+    // calloc must zero the returned memory.
+    int *p = (int *)calloc(8, sizeof(int));
+    assert(p != NULL);
+    for (int i = 0; i < 8; i++) assert(p[i] == 0);
+    free(p);
+
+    // Larger allocation: every byte must be zero.
+    unsigned char *bytes = (unsigned char *)calloc(128, 1);
+    assert(bytes != NULL);
+    for (int i = 0; i < 128; i++) assert(bytes[i] == 0);
+    free(bytes);
+
+    // calloc(0, n) / calloc(n, 0) may return NULL or a valid pointer —
+    // both are conforming. Just make sure free() handles whatever comes
+    // back.
+    void *z = calloc(0, 16);
+    free(z);
+}
+
+static void test_realloc(void) {
+    // realloc(NULL, n) behaves like malloc(n).
+    char *p = (char *)realloc(NULL, 16);
+    assert(p != NULL);
+    for (int i = 0; i < 16; i++) p[i] = (char)i;
+
+    // Grow: existing contents up to the old size must be preserved.
+    p = (char *)realloc(p, 64);
+    assert(p != NULL);
+    for (int i = 0; i < 16; i++) assert(p[i] == (char)i);
+    for (int i = 16; i < 64; i++) p[i] = (char)i;
+
+    // Shrink: existing contents within the new size must be preserved.
+    p = (char *)realloc(p, 8);
+    assert(p != NULL);
+    for (int i = 0; i < 8; i++) assert(p[i] == (char)i);
+
+    free(p);
+
+    // realloc(p, 0) is implementation-defined: some implementations free
+    // and return NULL, others return a small allocation that must itself
+    // be freed. Accept both.
+    char *q = (char *)malloc(8);
+    assert(q != NULL);
+    void *r = realloc(q, 0);
+    if (r != NULL) free(r);
+}
+
+static void test_getenv(void) {
+    // A variable name that is exceedingly unlikely to exist on any host
+    // must return NULL — and our stub always does.
+    assert(getenv("__corec_stdlib_definitely_unset_var__") == NULL);
+}
+
 static void test_rand(void) {
     // Same seed must produce same sequence (deterministic).
     srand(1);
@@ -562,6 +708,9 @@ static void run_tests(void) {
     test_printf_formats();
     test_printf_return();
     test_snprintf();
+    test_sprintf();
+    test_fprintf_file();
+    test_std_streams();
     test_file_io();
 
     printf("## <stdlib.h>\n");
@@ -569,6 +718,9 @@ static void run_tests(void) {
     test_atoll();
     test_atof();
     test_malloc_free();
+    test_calloc();
+    test_realloc();
+    test_getenv();
     test_rand();
     test_stdlib_macros();
 
