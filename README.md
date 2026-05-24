@@ -145,6 +145,16 @@ pixi run -e windows test_windows     # Windows native (MSVC /kernel, on Windows 
 pixi run -e wasm    test_wasm        # WebAssembly via wasmtime
 ```
 
+To run the same `test_stdlib.c` against the host's *real* C standard
+library (this is what CI runs first, to verify the assertions are correct
+before checking them against the nostdlib build):
+
+```bash
+pixi run -e linux   test_host        # Linux: cc against glibc/musl/...
+pixi run -e macos   test_host        # macOS: cc against libSystem
+pixi run -e windows test_host        # Windows: cl against the MSVC CRT
+```
+
 The same `corec_stdlib_test.wasm` runs in `wasmtime` and any other
 WASI-compatible runtime.
 

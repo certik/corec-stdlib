@@ -18,11 +18,17 @@
 
 // Memory management — currently backed by corec's buddy allocator.
 void *malloc(size_t size);
+void *calloc(size_t nmemb, size_t size);
+void *realloc(void *ptr, size_t size);
 void  free(void *ptr);
 
 // Process control.
 void exit(int status);
 void abort(void);
+
+// Environment access. The wasm32-wasi backend doesn't expose an
+// environment to the module, so this currently always returns NULL.
+char *getenv(const char *name);
 
 // Pseudo-random numbers (linear congruential, deterministic for a given seed).
 void srand(unsigned int seed);

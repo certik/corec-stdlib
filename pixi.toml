@@ -94,6 +94,8 @@ clang \
 
 test_linux = { cmd = "./corec_stdlib_test_linux", depends-on = ["build_linux"], description = "Run corec_stdlib_test_linux native test binary" }
 
+test_host = { cmd = "cc -Wall -Wextra -Werror test_stdlib.c -o test_stdlib_host && ./test_stdlib_host", description = "Build and run test_stdlib.c against the host's C standard library (Linux)" }
+
 [feature.linux.target.linux-64.dependencies]
 clang = ">=20.1.4,<21"
 
@@ -134,6 +136,8 @@ clang \
 """, description = "Build corec_stdlib_test_macos native binary (macOS only)" }
 
 test_macos = { cmd = "./corec_stdlib_test_macos", depends-on = ["build_macos"], description = "Run corec_stdlib_test_macos native test binary" }
+
+test_host = { cmd = "cc -Wall -Wextra -Werror test_stdlib.c -o test_stdlib_host && ./test_stdlib_host", description = "Build and run test_stdlib.c against the host's C standard library (macOS)" }
 
 #=============================================================================
 # Windows
@@ -199,6 +203,8 @@ link \
 """, description = "Build corec_stdlib_test_windows.exe native binary (Windows only; requires MSVC vcvars64)" }
 
 test_windows = { cmd = "./corec_stdlib_test_windows.exe", depends-on = ["build_windows"], description = "Run corec_stdlib_test_windows.exe native test binary" }
+
+test_host = { cmd = "cl /nologo /WX /W3 test_stdlib.c /Fe:test_stdlib_host.exe && test_stdlib_host.exe", description = "Build and run test_stdlib.c against the host's C standard library (Windows; requires MSVC vcvars64)" }
 
 [feature.windows.target.win-64.dependencies]
 # MSVC must be available on PATH (e.g. via vcvars64.bat)

@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include <base/io.h>
+#include <base/numconv.h>
 #include <platform/platform.h>
 
 // FILE structure wrapping a corec platform file descriptor
@@ -19,6 +21,24 @@ typedef struct FILE {
 #define FILE_POOL_SIZE 16
 static FILE file_pool[FILE_POOL_SIZE];
 static int file_pool_initialized = 0;
+
+// Standard streams. Initialised lazily on first use of stdin/stdout/stderr.
+// Backed by platform-stable fd numbers (PLATFORM_STDIN_FD / STDOUT_FD /
+// STDERR_FD). Each `FILE` is the same statically-allocated object returned
+// to user code via the `stdin` / `stdout` / `stderr` macros.
+static FILE _std_streams[3];
+static int  _std_streams_initialized = 0;
+static FILE *_init_std_streams(int which) {
+    if (!_std_streams_initialized) {
+        _std_streams[0].fd = PLATFORM_STDIN_FD;
+        _std_streams[1].fd = PLATFORM_STDOUT_FD;
+        _std_streams[2].fd = PLATFORM_STDERR_FD;
+        for (int i = 0; i < 3; i++) { _std_streams[i].eof = 0; _std_streams[i].error = 0; }
+        _std_streams_initialized = 1;
+    }
+    return &_std_streams[which];
+}
+FILE *_std_stream(int which) { return _init_std_streams(which); }
 
 static void init_file_pool(void) {
     if (!file_pool_initialized) {
@@ -195,3 +215,44 @@ int fputs(const char *s, FILE *stream) {
 }
 
 // printf / vprintf live in printf.c; snprintf / vsnprintf live in stdlib.c.
+
+#define FPRINTF_BUF_SIZE 4096
+
+int vfprintf(FILE *stream, const char *format, va_list ap) {
+    if (!stream || stream->fd < 0) return -1;
+    char buf[FPRINTF_BUF_SIZE];
+    int n = base_vsnprintf(buf, sizeof(buf), format, ap);
+    if (n <= 0) return n;
+    size_t to_write = (size_t)n;
+    if (to_write > sizeof(buf) - 1) to_write = sizeof(buf) - 1;
+    ciovec_t iov;
+    iov.buf = buf;
+    iov.buf_len = to_write;
+    size_t nwritten;
+    int ret = (int)platform_fd_write(stream->fd, &iov, 1, &nwritten);
+    if (ret != 0) { stream->error = 1; return -1; }
+    return n;
+}
+
+int fprintf(FILE *stream, const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    int r = vfprintf(stream, format, ap);
+    va_end(ap);
+    return r;
+}
+
+int vsprintf(char *str, const char *format, va_list ap) {
+    // ISO C: write until terminating NUL; no length cap. We delegate to
+    // base_vsnprintf with SIZE_MAX, which behaves like sprintf if the
+    // buffer is large enough — which is the caller's responsibility.
+    return base_vsnprintf(str, (size_t)-1, format, ap);
+}
+
+int sprintf(char *str, const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    int r = vsprintf(str, format, ap);
+    va_end(ap);
+    return r;
+}
