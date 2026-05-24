@@ -588,8 +588,32 @@ static void test_realloc(void) {
 
 static void test_getenv(void) {
     // A variable name that is exceedingly unlikely to exist on any host
-    // must return NULL — and our stub always does.
+    // must return NULL.
     assert(getenv("__corec_stdlib_definitely_unset_var__") == NULL);
+
+    // CI sets COREC_TEST_ENV=corec_test_value for every test invocation
+    // (native host stdlib, nostdlib native build, and wasmtime via --env),
+    // so getenv must round-trip it correctly on every backend.
+    const char *val = getenv("COREC_TEST_ENV");
+    assert(val != NULL);
+    assert(strcmp(val, "corec_test_value") == 0);
+    assert(strlen(val) == strlen("corec_test_value"));
+
+    // Repeated lookups must keep returning the same (stable) pointer.
+    assert(getenv("COREC_TEST_ENV") == val);
+
+    // An empty-string name is never a valid environment entry name
+    // (entries are at minimum "X=..."), so it must return NULL. This also
+    // matters on Windows, where the process environment contains hidden
+    // "=DRIVE:=..." entries whose key is the empty string; getenv("")
+    // must not return one of those.
+    assert(getenv("") == NULL);
+
+    // A name that is a prefix of a real entry must not match — getenv
+    // must match the full name up to the '=' separator, not just a
+    // prefix.
+    assert(getenv("COREC_TEST_EN") == NULL);
+    assert(getenv("COREC_TEST_ENVX") == NULL);
 }
 
 static void test_rand(void) {

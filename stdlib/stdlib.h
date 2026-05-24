@@ -26,8 +26,10 @@ void  free(void *ptr);
 void exit(int status);
 void abort(void);
 
-// Environment access. The wasm32-wasi backend doesn't expose an
-// environment to the module, so this currently always returns NULL.
+// Environment access. Looks up `name` in the platform's environment block
+// and returns a pointer to the value (the bytes after the '=' separator)
+// on a match, or NULL if the variable is not set. The returned pointer is
+// owned by getenv() and must not be modified or freed by the caller.
 char *getenv(const char *name);
 
 // Pseudo-random numbers (linear congruential, deterministic for a given seed).
