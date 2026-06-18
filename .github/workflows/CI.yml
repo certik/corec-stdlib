@@ -24,8 +24,10 @@ jobs:
               pixi run -e wasm test_wasm
           - platform: windows
             os: windows-latest
+            vcvars-command: |
+              for /f "usebackq tokens=*" %%i in (`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSINSTALL=%%i"
+              call "%VSINSTALL%\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
             pixi-command: |
-              call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
               pixi run -e windows test_windows || exit /b 1
               pixi run -e wasm test_wasm || exit /b 1
 
@@ -57,7 +59,7 @@ jobs:
       - name: Test against host stdlib (Windows)
         if: matrix.platform == 'windows'
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
+          ${{ matrix.vcvars-command }}
           pixi run -e windows test_host || exit /b 1
         shell: cmd
 
@@ -67,5 +69,7 @@ jobs:
 
       - name: Build and test ${{ matrix.platform }}
         if: matrix.platform == 'windows'
-        run: ${{ matrix.pixi-command }}
+        run: |
+          ${{ matrix.vcvars-command }}
+          ${{ matrix.pixi-command }}
         shell: cmd
