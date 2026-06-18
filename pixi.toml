@@ -40,6 +40,7 @@ clang \
     corec/base/format.c \
     corec/base/math.c \
     corec/base/string.c \
+    corec/base/strbuf.c \
     corec/base/mem.c \
     corec/base/numconv.c \
     corec/base/assert.c \
@@ -85,6 +86,7 @@ clang \
     corec/base/format.c \
     corec/base/math.c \
     corec/base/string.c \
+    corec/base/strbuf.c \
     corec/base/mem.c \
     corec/base/numconv.c \
     corec/base/assert.c \
@@ -126,6 +128,7 @@ clang \
     corec/base/format.c \
     corec/base/math.c \
     corec/base/string.c \
+    corec/base/strbuf.c \
     corec/base/mem.c \
     corec/base/numconv.c \
     corec/base/assert.c \
@@ -169,6 +172,7 @@ cl \
     corec/base/format.c \
     corec/base/math.c \
     corec/base/string.c \
+    corec/base/strbuf.c \
     corec/base/mem.c \
     corec/base/numconv.c \
     corec/base/assert.c \
@@ -194,6 +198,7 @@ link \
     format.obj \
     math.obj \
     string.obj \
+    strbuf.obj \
     mem.obj \
     numconv.obj \
     assert.obj \
