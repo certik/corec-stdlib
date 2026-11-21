@@ -264,10 +264,9 @@ static void test_snprintf(void) {
     check_streq(buf, "-7-ok", "snprintf compound");
 
     // Truncation: buffer too small. The result must be zero-terminated and
-    // contain a prefix of the formatted output. ISO C says the return value
-    // is the number of characters that *would* have been written if the
-    // buffer were large enough; some implementations (including corec's
-    // current base_vsnprintf) return the truncated length. We accept both.
+    // contain a prefix of the formatted output, and the return value is the
+    // number of characters that *would* have been written if the buffer were
+    // large enough (ISO C).
     //
     // GCC's -Wformat-truncation flags this *intentional* truncation, so
     // suppress that warning narrowly here.
@@ -280,16 +279,26 @@ static void test_snprintf(void) {
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-    assert(n == 6 || n == 3);
+    assert(n == 6);
     assert(small[3] == '\0');
     check_streq(small, "abc", "snprintf truncation");
 
-    // Zero size: buffer untouched. Return value is implementation-defined
-    // when size==0 (ISO C says "would-be" length, some impls return 0).
+    // Zero size: buffer untouched, and the return value is the would-be
+    // length, so snprintf(NULL, 0, ...) measures the output.
     char untouched[4] = { 'Z', 'Z', 'Z', 'Z' };
     n = snprintf(untouched, 0, "abc");
-    (void)n;
+    assert(n == 3);
     assert(untouched[0] == 'Z');
+    n = snprintf(NULL, 0, "%d", -12345);
+    assert(n == 6);
+
+    // Flags, width and length modifiers.
+    n = snprintf(buf, sizeof(buf), "\\%02X|%-4d|%+.3d", 10, -5, 7);
+    assert(n == 13);
+    check_streq(buf, "\\0A|-5  |+007", "snprintf flags/width/precision");
+    n = snprintf(buf, sizeof(buf), "%hhd %hu %#x", 200, 65537, 255);
+    assert(n == 10);
+    check_streq(buf, "-56 1 0xff", "snprintf hh/h/#");
 
     // %e: scientific notation. Basic positive, negative, and zero cases at
     // default precision (6).

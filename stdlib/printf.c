@@ -1,8 +1,8 @@
 // stdlib printf/vprintf — write formatted output to stdout.
 //
-// Implementation delegates to corec/base/numconv.c's base_vsnprintf, which
-// already supports the full format set we need: %d, %i, %u, %ld, %lu, %lld,
-// %llu, %zu, %x, %X, %lx, %lX, %llx, %llX, %p, %c, %s, %f, %.Nf, %%.
+// Implementation delegates to corec/base/numconv.c's base_vsnprintf (flags,
+// width, precision, hh/h/l/ll/j/z/t and d i u o x X p c s f e g %; see
+// base/numconv.h for the details).
 // Keeping a single formatter (base_vsnprintf) means printf and snprintf
 // behave identically.
 //
