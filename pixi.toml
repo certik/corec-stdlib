@@ -33,6 +33,7 @@ clang \
     stdlib/stdlib.c \
     stdlib/printf.c \
     stdlib/string_impl.c \
+    stdlib/math_impl.c \
     corec/base/io.c \
     corec/base/buddy.c \
     corec/base/arena.c \
@@ -79,6 +80,7 @@ clang \
     stdlib/stdlib.c \
     stdlib/printf.c \
     stdlib/string_impl.c \
+    stdlib/math_impl.c \
     corec/base/io.c \
     corec/base/buddy.c \
     corec/base/arena.c \
@@ -96,7 +98,7 @@ clang \
 
 test_linux = { cmd = "./corec_stdlib_test_linux", depends-on = ["build_linux"], description = "Run corec_stdlib_test_linux native test binary" }
 
-test_host = { cmd = "cc -Wall -Wextra -Werror test_stdlib.c -o test_stdlib_host && ./test_stdlib_host", description = "Build and run test_stdlib.c against the host's C standard library (Linux)" }
+test_host = { cmd = "cc -Wall -Wextra -Werror test_stdlib.c -lm -o test_stdlib_host && ./test_stdlib_host", description = "Build and run test_stdlib.c against the host's C standard library (Linux)" }
 
 [feature.linux.target.linux-64.dependencies]
 clang = ">=20.1.4,<21"
@@ -121,6 +123,7 @@ clang \
     stdlib/stdlib.c \
     stdlib/printf.c \
     stdlib/string_impl.c \
+    stdlib/math_impl.c \
     corec/base/io.c \
     corec/base/buddy.c \
     corec/base/arena.c \
@@ -165,6 +168,7 @@ cl \
     stdlib/stdlib.c \
     stdlib/printf.c \
     stdlib/string_impl.c \
+    stdlib/math_impl.c \
     corec/base/io.c \
     corec/base/buddy.c \
     corec/base/arena.c \
@@ -191,6 +195,7 @@ link \
     stdlib.obj \
     printf.obj \
     string_impl.obj \
+    math_impl.obj \
     io.obj \
     buddy.obj \
     arena.obj \

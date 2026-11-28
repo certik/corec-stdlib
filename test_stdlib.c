@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 #include <assert.h>
 
 // MSVC's CRT marks several standard C functions (strcpy, sprintf, ...) as
@@ -700,6 +701,45 @@ static void test_ctype(void) {
 }
 
 // -----------------------------------------------------------------------
+// <math.h>
+// -----------------------------------------------------------------------
+
+static void test_math(void) {
+    const double PI = 3.14159265358979323846;
+
+    assert(fabs(-3.5) == 3.5 && fabs(3.5) == 3.5);
+    assert(fabsf(-2.5f) == 2.5f && fabsf(2.5f) == 2.5f);
+
+    assert(fabs(sin(0.0)) < 1e-14);
+    assert(fabs(sin(PI * 0.5) - 1.0) < 1e-14);
+    assert(fabs(cos(0.0) - 1.0) < 1e-14);
+    assert(fabs(cos(PI) + 1.0) < 1e-14);
+    assert(fabs(tan(PI * 0.25) - 1.0) < 1e-14);
+    assert(fabs(exp(0.0) - 1.0) < 1e-14);
+    assert(fabs(exp(1.0) - 2.7182818284590452) < 1e-14);
+    assert(fabs(log(1.0)) < 1e-14);
+    assert(fabs(log(exp(2.5)) - 2.5) < 1e-13);
+    assert(fabs(pow(2.0, 10.0) - 1024.0) < 1e-11);
+    assert(fabs(pow(9.0, 0.5) - 3.0) < 1e-14);
+    assert(fabs(sqrt(16.0) - 4.0) < 1e-4);
+    assert(floor(2.7) == 2.0 && floor(-2.7) == -3.0);
+    assert(ceil(2.1) == 3.0 && ceil(-2.1) == -2.0);
+    assert(round(2.6) == 3.0 && round(-2.6) == -3.0);
+    assert(fabs(fmod(5.5, 2.0) - 1.5) < 1e-14);
+
+    assert(fabsf(sinf(0.0f)) < 1e-6f);
+    assert(fabsf(cosf(0.0f) - 1.0f) < 1e-6f);
+    assert(fabsf(tanf(0.78539816f) - 1.0f) < 1e-5f);
+    assert(fabsf(expf(1.0f) - 2.7182818f) < 1e-5f);
+    assert(fabsf(logf(2.7182818f) - 1.0f) < 1e-5f);
+    assert(fabsf(powf(2.0f, 8.0f) - 256.0f) < 1e-4f);
+    assert(fabsf(sqrtf(25.0f) - 5.0f) < 1e-3f);
+    assert(floorf(2.7f) == 2.0f && ceilf(2.1f) == 3.0f);
+    assert(roundf(2.6f) == 3.0f);
+    assert(fabsf(fmodf(5.5f, 2.0f) - 1.5f) < 1e-6f);
+}
+
+// -----------------------------------------------------------------------
 // <assert.h>
 // -----------------------------------------------------------------------
 
@@ -759,6 +799,9 @@ static void run_tests(void) {
 
     printf("## <ctype.h>\n");
     test_ctype();
+
+    printf("## <math.h>\n");
+    test_math();
 
     printf("## <assert.h>\n");
     test_assert();
